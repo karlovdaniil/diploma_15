@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+
 from envparse import env
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -79,13 +80,13 @@ WSGI_APPLICATION = 'todolist.wsgi.application'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": env.str('POSTGRES_DB'),
-        "USER": env.str('POSTGRES_USER'),
-        "PASSWORD": env.str('POSTGRES_PASSWORD'),
-        "HOST": env.str('POSTGRES_HOST', default='127.0.0.1'),
-        "PORT": "5432",
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': env.str('POSTGRES_DB'),
+        'USER': env.str('POSTGRES_USER'),
+        'PASSWORD': env.str('POSTGRES_PASSWORD'),
+        'HOST': env.str('POSTGRES_HOST', default='127.0.0.1'),
+        'PORT': '5432',
     }
 }
 
