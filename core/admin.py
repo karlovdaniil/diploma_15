@@ -8,6 +8,7 @@ from core.models import User
 @admin.register(User)
 class CustomUser(UserAdmin):
     readonly_fields = ('last_login', 'date_joined')
+    list_display = ('id', 'username')
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
         ('Personal info', {'fields': ('first_name', 'last_name', 'email')}),
