@@ -1,12 +1,11 @@
 from django.urls import path
 
-from goals.apps import GoalsConfig
 from goals.views.boards import BoardCreateView, BoardDetailView, BoardListView
 from goals.views.categories import CategoryCreateView, CategoryDetailView, CategoryListView
 from goals.views.comments import GoalCommentCreateView, GoalCommentDetailView, GoalCommentListView
 from goals.views.goals import GoalCreateView, GoalDetailView, GoalListView
 
-app_name = GoalsConfig.name
+app_name = 'goals'
 
 urlpatterns = [
     # Boards
