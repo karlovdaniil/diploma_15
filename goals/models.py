@@ -4,7 +4,29 @@ from core.models import User
 from todolist.models import BaseModel
 
 
+class Board(BaseModel):
+    title = models.CharField(max_length=255)
+    is_deleted = models.BooleanField(default=False)
+
+
+class BoardParticipant(BaseModel):
+    class Role(models.IntegerChoices):
+        owner = 1, 'Владелец'
+        writer = 2, 'Редактор'
+        reader = 3, 'Читатель'
+
+    board = models.ForeignKey(Board, on_delete=models.PROTECT, related_name='participants')
+    user = models.ForeignKey(User, on_delete=models.PROTECT, related_name='participants')
+    role = models.PositiveSmallIntegerField(choices=Role.choices, default=Role.owner)
+
+    editable_role = Role.choices[1:]
+
+    class Meta:
+        unique_together = ('board', 'user')
+
+
 class GoalCategory(BaseModel):
+    board = models.ForeignKey(Board, on_delete=models.PROTECT, related_name='categories')
     title = models.CharField(verbose_name='Название', max_length=255)
     user = models.ForeignKey(User, verbose_name='Автор', on_delete=models.PROTECT)
     is_deleted = models.BooleanField(verbose_name='Удалена', default=False)
