@@ -5,7 +5,7 @@ from rest_framework.generics import RetrieveUpdateDestroyAPIView
 
 from goals.models import Board, Goal
 from goals.permissions import BoardPermission
-from goals.serializers import BoardListSerializer, BoardSerializer
+from goals.serializers import BoardCreateSerializer, BoardListSerializer, BoardSerializer
 
 
 class BoardView(RetrieveUpdateDestroyAPIView):
@@ -23,6 +23,13 @@ class BoardView(RetrieveUpdateDestroyAPIView):
             instance.categories.update(is_deleted=True)
             Goal.objects.filter(category__board=instance).update(status=Goal.Status.archived)
         return instance
+
+
+class BoardCreateView(generics.CreateAPIView):
+    model = Board
+    queryset = Board.objects.all()
+    serializer_class = BoardCreateSerializer
+    permissions_classes = [permissions.IsAuthenticated]
 
 
 class BoardListView(generics.ListAPIView):
