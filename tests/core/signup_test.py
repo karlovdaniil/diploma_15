@@ -1,24 +1,43 @@
 import pytest
+from django.urls import reverse
 from rest_framework import status
 
-
-@pytest.mark.django_db
-def test_signup(client):
-    """Test for registering a new user and hashing a password"""
-    data = {'id': 6, 'username': 'test_user', 'password': '2nghdk5od', 'password_repeat': '2nghdk5od'}
-
-    expected_response = {'id': 6, 'username': 'test_user', 'first_name': '', 'last_name': '', 'email': ''}
-
-    response = client.post('/core/signup', data, content_type='application/json')
-
-    assert response.status_code == status.HTTP_201_CREATED
-    assert response.data == expected_response
+from core.models import User
+from tests.core.factories import SingUpRequest
 
 
 @pytest.mark.django_db
-def test_signup_not_repeated_password(client):
-    """Test for the impossibility of registration if the specified passwords do not match"""
-    data = {'username': 'test_user', 'password': '2nghdk5od', 'password_repeat': '1232nghdk5od'}
+class TestSignUpView:
+    url = reverse('core:signup')
 
-    response = client.post('/core/signup', data, content_type='application/json')
-    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    def test_user_create(self, client):
+        data = SingUpRequest.build()
+        response = client.post(self.url, data)
+        assert response.status_code == status.HTTP_201_CREATED
+        user = User.objects.get()
+        assert response.json() == self._serialize_response(user)
+        assert user.check_password(data['password'])
+
+    def test_password_missmatch(self, client, faker):
+        data = SingUpRequest.build(password_repeat=faker.password())
+        response = client.post(self.url, data=data)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json() == {'non_field_errors': ['Password must match']}
+
+    def test_user_already_exist(self, client, user):
+        data = SingUpRequest.build(username=user.username)
+        response = client.post(self.url, data=data)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json() == {'username': ['A user with that username already exists.']}
+
+    @staticmethod
+    def _serialize_response(user: User, **kwargs) -> dict:
+        data = {
+            'id': user.id,
+            'username': user.username,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'email': user.email,
+        }
+        data |= kwargs
+        return data

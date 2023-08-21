@@ -1,78 +1,68 @@
 import pytest
+from django.contrib.auth import get_user
+from django.urls import reverse
 from rest_framework import status
-from rest_framework.exceptions import ErrorDetail
+
+from core.models import User
 
 
-@pytest.mark.django_db
-def test_get_profile(client, user, auth_user_response):
-    """Test for downloading an authorized user profile"""
-    expected_response = {'id': user.id, 'username': user.username, 'first_name': '', 'last_name': '', 'email': ''}
-
-    response = client.get('/core/profile')
-
-    assert response.status_code == status.HTTP_200_OK
-    assert response.data == expected_response
+@pytest.fixture()
+def get_url(request) -> None:
+    request.cls.url = reverse('core:profile')
 
 
-@pytest.mark.django_db
-def test_patch_profile(client, user, auth_user_response):
-    """Test for changing the data of an authorized user"""
-    expected_response = {'id': user.id, 'username': user.username, 'first_name': '123', 'last_name': '123', 'email': ''}
+@pytest.mark.django_db()
+@pytest.mark.usefixtures('get_url')
+class TestGetProfileView:
+    def test_auth_required(self, client):
+        response = client.get(self.url)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    response = client.patch(
-        '/core/profile', data={'first_name': '123', 'last_name': '123'}, content_type='application/json'
-    )
+    def test_returns_request_user(self, auth_client):
+        response = auth_client.get(self.url)
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json() == self._serialize_response(user=get_user(auth_client))
 
-    assert response.status_code == status.HTTP_200_OK
-    assert response.data == expected_response
-
-
-@pytest.mark.django_db
-def test_get_profile_not_authorized(client):
-    """Test for closing a profile without authorization"""
-    expected_response = {'detail': 'Authentication credentials were not provided.'}
-    response = client.get('/core/profile')
-    assert response.status_code == status.HTTP_403_FORBIDDEN
-    assert response.data == expected_response
-
-
-@pytest.mark.django_db
-def test_update_password(client, user):
-    """Password change test, checking the absence of access using the old password"""
-    old_password = user.password
-    user.set_password(old_password)
-    user.save()
-    response = client.post(
-        '/core/login', data={'username': user.username, 'password': old_password}, content_type='application/json'
-    )
-
-    response = client.patch(
-        '/core/update_password',
-        data={'old_password': old_password, 'new_password': 'fbvdhvu356'},
-        content_type='application/json',
-    )
-
-    response_old_password = client.post(
-        '/core/login', data={'username': user.username, 'password': old_password}, content_type='application/json'
-    )
-
-    response_new_password = client.post(
-        '/core/login', data={'username': user.username, 'password': 'fbvdhvu356'}, content_type='application/json'
-    )
-
-    assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
-    assert response_old_password.status_code == status.HTTP_200_OK
-    assert response_new_password.status_code == status.HTTP_403_FORBIDDEN
+    @staticmethod
+    def _serialize_response(user: User, **kwargs) -> dict:
+        data = {
+            'id': user.id,
+            'username': user.username,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'email': user.email,
+        }
+        data |= kwargs
+        return data
 
 
-@pytest.mark.django_db
-def test_update_passwort_wrong_old_password(client, auth_user_response):
-    """Test for the inability to change the password with an incorrect old password"""
-    expected_response = {'detail': ErrorDetail(string='Method "PATCH" not allowed.', code='method_not_allowed')}
-    response = client.patch(
-        '/core/update_password',
-        data={'old_password': '123', 'new_password': 'fbvdhvu356'},
-        content_type='application/json',
-    )
-    assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
-    assert response.data == expected_response
+@pytest.mark.django_db()
+@pytest.mark.usefixtures('get_url')
+class TestLogoutView:
+    def test_auth_required(self, client):
+        response = client.delete(self.url)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_user_not_deleted_on_logout(self, auth_client, user):
+        response = auth_client.delete(self.url)
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert User.objects.filter(id=user.id).exists()
+
+    def test_user_logger_out(self, auth_client):
+        response = auth_client.delete(self.url)
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert not get_user(auth_client).is_authenticated
+
+
+@pytest.mark.django_db()
+@pytest.mark.usefixtures('get_url')
+class TestUpdateProfileView:
+    def test_auth_required(self, client):
+        response = client.patch(self.url)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_update_username_on_existing(self, auth_client, user_factory):
+        another_user = user_factory.create()
+        response = auth_client.patch(self.url, data={'username': another_user.username})
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json() == {'username': ['A user with that username already exists.']}
