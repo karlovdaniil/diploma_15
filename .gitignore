@@ -4,3 +4,6 @@ __pycache__
 .env
 .DS_Store
 serv_psw.txt
+bot/management/commands/test_bot.py
+tg_get_response.json
+tg_send_response.json
