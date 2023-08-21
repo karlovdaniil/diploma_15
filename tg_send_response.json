@@ -1,0 +1,21 @@
+{
+    "ok": true,
+    "result": {
+        "message_id": 3,
+        "from": {
+            "id": 6384795634,
+            "is_bot": true,
+            "first_name": "ToDoList_DEV",
+            "username": "ToDoList_dskarlov_DEV_bot"
+        },
+        "chat": {
+            "id": 459980483,
+            "first_name": "Карлов",
+            "last_name": "Даниил",
+            "username": "KarlovDaniil",
+            "type": "private"
+        },
+        "date": 1692301633,
+        "text": "hello"
+    }
+}

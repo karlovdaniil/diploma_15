@@ -1,0 +1,28 @@
+{
+    "ok": true,
+    "result": [
+        {
+            "update_id": 921137896,
+            "message": {
+                "message_id": 2,
+                "from": {
+                    "id": 459980483,
+                    "is_bot": false,
+                    "first_name": "Карлов",
+                    "last_name": "Даниил",
+                    "username": "KarlovDaniil",
+                    "language_code": "ru"
+                },
+                "chat": {
+                    "id": 459980483,
+                    "first_name": "Карлов",
+                    "last_name": "Даниил",
+                    "username": "KarlovDaniil",
+                    "type": "private"
+                },
+                "date": 1692301423,
+                "text": "ghbdtn"
+            }
+        }
+    ]
+}

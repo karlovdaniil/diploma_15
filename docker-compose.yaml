@@ -46,6 +46,16 @@ services:
       - ./goals:/opt/app/goals/
       - ./todolist:/opt/app/todolist/
 
+  bot:
+    build: .
+    env_file: .env
+    environment:
+      POSTGRES_HOST: db
+    depends_on:
+      run_migrations:
+        condition: service_completed_successfully
+    command: python manage.py runbot
+
   collect_static:
     build: .
     env_file: .env
